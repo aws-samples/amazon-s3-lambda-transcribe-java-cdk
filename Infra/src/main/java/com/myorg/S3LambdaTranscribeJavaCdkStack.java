@@ -1,6 +1,7 @@
 package com.myorg;
 
 import software.amazon.awscdk.Duration;
+import software.amazon.awscdk.RemovalPolicy;
 import software.amazon.awscdk.Stack;
 import software.amazon.awscdk.StackProps;
 import software.amazon.awscdk.services.iam.ManagedPolicy;
@@ -33,6 +34,7 @@ public class S3LambdaTranscribeJavaCdkStack extends Stack {
 		                                     .encryption(BucketEncryption.KMS)
 		                                     .blockPublicAccess(BlockPublicAccess.BLOCK_ALL)
 		                                     .versioned(true)
+		                                     .removalPolicy(RemovalPolicy.DESTROY)
 		                                     .build();
 
 		Bucket sourceBucket = Bucket.Builder.create(this, "SourceBucket")
@@ -41,7 +43,8 @@ public class S3LambdaTranscribeJavaCdkStack extends Stack {
 		                                    .encryption(BucketEncryption.KMS)
 		                                    .blockPublicAccess(BlockPublicAccess.BLOCK_ALL)
 		                                    .serverAccessLogsBucket(loggingBucket)
-		                                    .serverAccessLogsPrefix("/sourceBucket")
+		                                    .serverAccessLogsPrefix("sourceBucket/")
+		                                    .removalPolicy(RemovalPolicy.DESTROY)
 		                                    .build();
 
 		Bucket destinationBucket = Bucket.Builder.create(this, "DestinationBucket")
@@ -50,7 +53,8 @@ public class S3LambdaTranscribeJavaCdkStack extends Stack {
 		                                         .encryption(BucketEncryption.KMS)
 		                                         .blockPublicAccess(BlockPublicAccess.BLOCK_ALL)
 		                                         .serverAccessLogsBucket(loggingBucket)
-		                                         .serverAccessLogsPrefix("/destinationBucket")
+		                                         .serverAccessLogsPrefix("destinationBucket/")
+		                                         .removalPolicy(RemovalPolicy.DESTROY)
 		                                         .build();
 
 		// Create an IAM role for the Lambda function
