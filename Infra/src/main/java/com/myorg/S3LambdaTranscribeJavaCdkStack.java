@@ -69,7 +69,7 @@ public class S3LambdaTranscribeJavaCdkStack extends Stack {
 		                                                   .memorySize(1024)
 		                                                   .timeout(Duration.minutes(3))
 		                                                   .code(Code.fromAsset("../assets/AudioTranscribeFunction.jar"))
-		                                                   .environment(Map.of("LANGUAGE_CODE", "US_EN", "OUTPUT_BUCKET", destinationBucket.getBucketName()))
+		                                                   .environment(Map.of("LANGUAGE_CODE", "en-US", "OUTPUT_BUCKET", destinationBucket.getBucketName()))
 		                                                   .role(lambdaRole)
 		                                                   .build();
 
