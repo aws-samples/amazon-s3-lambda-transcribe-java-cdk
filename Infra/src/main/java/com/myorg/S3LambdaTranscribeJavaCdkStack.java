@@ -1,9 +1,6 @@
 package com.myorg;
 
-import software.amazon.awscdk.Duration;
-import software.amazon.awscdk.RemovalPolicy;
-import software.amazon.awscdk.Stack;
-import software.amazon.awscdk.StackProps;
+import software.amazon.awscdk.*;
 import software.amazon.awscdk.services.iam.ManagedPolicy;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
@@ -28,6 +25,21 @@ public class S3LambdaTranscribeJavaCdkStack extends Stack {
 
 	public S3LambdaTranscribeJavaCdkStack(final Construct scope, final String id, final StackProps props) {
 		super(scope, id, props);
+
+//		CfnParameter sourceBucketName = CfnParameter.Builder.create(this, "SourceBucketName")
+//		                                                    .type("String")
+//		                                                    .description("Name of the source bucket")
+//		                                                    .build();
+//		CfnParameter destinationBucketName = CfnParameter.Builder.create(this, "DestinationBucketName")
+//		                                                         .type("String")
+//		                                                         .description("Name of the destination bucket")
+//		                                                         .build();
+
+		CfnParameter languageCode = CfnParameter.Builder.create(this, "TranscribeLanguageCode")
+		                                                .type("String")
+		                                                .description("Language code for the transcription")
+		                                                .defaultValue("es-US,en-US")
+		                                                .build();
 
 		Bucket loggingBucket = Bucket.Builder.create(this, "LoggingBucket")
 		                                     .enforceSsl(true)
@@ -73,7 +85,8 @@ public class S3LambdaTranscribeJavaCdkStack extends Stack {
 		                                                   .memorySize(1024)
 		                                                   .timeout(Duration.minutes(3))
 		                                                   .code(Code.fromAsset("../assets/AudioTranscribeFunction.jar"))
-		                                                   .environment(Map.of("LANGUAGE_CODE", "en-US", "OUTPUT_BUCKET", destinationBucket.getBucketName()))
+		                                                   .environment(Map.of("LANGUAGE_CODE", languageCode.getValueAsString(),
+				                                                   "OUTPUT_BUCKET", destinationBucket.getBucketName()))
 		                                                   .role(lambdaRole)
 		                                                   .build();
 

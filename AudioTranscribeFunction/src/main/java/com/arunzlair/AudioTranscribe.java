@@ -12,9 +12,9 @@ import software.amazon.awssdk.services.transcribe.TranscribeAsyncClient;
 import software.amazon.awssdk.services.transcribe.model.Media;
 import software.amazon.awssdk.services.transcribe.model.StartTranscriptionJobRequest;
 import software.amazon.awssdk.services.transcribe.model.StartTranscriptionJobResponse;
-import software.amazon.awssdk.services.transcribe.model.Transcript;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -27,8 +27,10 @@ public class AudioTranscribe implements RequestHandler<S3Event, String> {
 
 	private final List<String> supportedExtensions = List.of("amr", "flac", "m4a", "mp3", "mp4", "ogg", "webm", "wav");
 
+
 	@Override
 	public String handleRequest(S3Event event, Context context) {
+		String lineSeparator = System.lineSeparator();
 		LambdaLogger logger = context.getLogger();
 		String response = "200 OK";
 
@@ -52,8 +54,26 @@ public class AudioTranscribe implements RequestHandler<S3Event, String> {
 			throw new RuntimeException("Invalid file extension, unsupported Amazon Transcribe file types!");
 		}
 
+		if (languageCode.contains(",")) {
+			for (String language : languageCode.split(",")) {
+				logger.log("Starting to process file " + key + " for language codes " + languageCode + lineSeparator);
+				runTranscribeJob(logger, language, outputBucket, bucketName, key, awsRequestId, extension, lineSeparator);
+				logger.log("Completed the processing of file " + key + " for language codes " + languageCode + lineSeparator);
+			}
+
+		} else {
+			logger.log("Starting to process file " + key + " for language code " + languageCode + lineSeparator);
+			runTranscribeJob(logger, languageCode, outputBucket, bucketName, key, awsRequestId, extension, lineSeparator);
+			logger.log("Completed the processing of file " + key + " for language code " + languageCode + lineSeparator);
+		}
+
+		return response;
+	}
+
+	private void runTranscribeJob(LambdaLogger logger, String languageCode, String outputBucket, String bucketName, String key, String awsRequestId, String extension, String lineSeparator) {
+		logger.log("Initializing the transcription job for language code " + languageCode + lineSeparator);
 		CompletableFuture<StartTranscriptionJobResponse> startTranscriptionJobResponseCompletableFuture = transcribeAsyncClient.startTranscriptionJob(StartTranscriptionJobRequest.builder()
-		                                                                                                                                                                          .transcriptionJobName("s3-lambda-audio-transcribe-" + awsRequestId)
+		                                                                                                                                                                          .transcriptionJobName("s3-lambda-audio-transcribe-" + UUID.randomUUID())
 		                                                                                                                                                                          .languageCode(languageCode)
 		                                                                                                                                                                          .media(Media.builder()
 		                                                                                                                                                                                      .mediaFileUri("s3://" + bucketName + "/" + key)
@@ -62,17 +82,14 @@ public class AudioTranscribe implements RequestHandler<S3Event, String> {
 		                                                                                                                                                                          .outputBucketName(outputBucket)
 		                                                                                                                                                                          .build());
 
-		logger.log("Started the transcription job");
+		logger.log("Started the transcription job request for language code " + languageCode + lineSeparator);
 
 		try {
 			StartTranscriptionJobResponse startTranscriptionJobResponse = startTranscriptionJobResponseCompletableFuture.get();
-			Transcript transcript = startTranscriptionJobResponse.transcriptionJob()
-			                                                     .transcript();
-			System.out.println("startTranscriptionJobResponse = " + transcript);
-			logger.log("Completed the transcription job");
+			System.out.println("startTranscriptionJobResponse = " + startTranscriptionJobResponse);
+			logger.log("Completed the transcription job request for language code " + languageCode + lineSeparator);
 		} catch (InterruptedException | ExecutionException e) {
 			throw new RuntimeException(e);
 		}
-		return response;
 	}
 }
