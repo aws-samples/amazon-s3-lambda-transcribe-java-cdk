@@ -35,7 +35,7 @@ public class S3LambdaTranscribeJavaCdkStack extends Stack {
 //		                                                         .description("Name of the destination bucket")
 //		                                                         .build();
 
-		CfnParameter languageCode = CfnParameter.Builder.create(this, "TranscribeLanguageCode")
+		CfnParameter languageCode = CfnParameter.Builder.create(this, "transcribeLanguageCode")
 		                                                .type("String")
 		                                                .description("Language code for the transcription")
 		                                                .defaultValue("es-US,en-US")
@@ -76,6 +76,7 @@ public class S3LambdaTranscribeJavaCdkStack extends Stack {
 
 		// Attach the necessary policies to the Lambda role
 		lambdaRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("AmazonTranscribeFullAccess"));
+		lambdaRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("CloudWatchLogsFullAccess"));
 
 
 		Function audioTranscribeFunction = Function.Builder.create(this, "AudioTranscribe")
@@ -88,6 +89,7 @@ public class S3LambdaTranscribeJavaCdkStack extends Stack {
 		                                                   .environment(Map.of("LANGUAGE_CODE", languageCode.getValueAsString(),
 				                                                   "OUTPUT_BUCKET", destinationBucket.getBucketName()))
 		                                                   .role(lambdaRole)
+
 		                                                   .build();
 
 
