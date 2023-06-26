@@ -11,4 +11,11 @@
         <module>Infra</module>
         <module>AudioTranscribeFunction</module>
     </modules>
+    <dependencies>
+        <dependency>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>license-maven-plugin</artifactId>
+            <version>2.1.0</version>
+        </dependency>
+    </dependencies>
 </project>
