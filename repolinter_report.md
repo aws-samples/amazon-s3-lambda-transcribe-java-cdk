@@ -47,11 +47,10 @@ For more information please visit https://w.amazon.com/bin/view/Open_Source/Tool
 - `.git`
 - `.gitignore`
 - `.idea`
-- `Infra/.gitignore`
 - `AudioTranscribeFunction/.DS_Store`
 - `AudioTranscribeFunction/.gitignore`
+- `Infra/.gitignore`
 - `AudioTranscribeFunction/src/.DS_Store`
-- `target`
 
 </details>
 
