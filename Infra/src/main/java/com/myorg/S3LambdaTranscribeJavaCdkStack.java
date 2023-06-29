@@ -3,9 +3,11 @@ package com.myorg;
 import io.github.cdklabs.cdknag.NagPackSuppression;
 import io.github.cdklabs.cdknag.NagSuppressions;
 import software.amazon.awscdk.*;
-import software.amazon.awscdk.services.iam.ManagedPolicy;
+import software.amazon.awscdk.services.iam.Effect;
+import software.amazon.awscdk.services.iam.PolicyStatement;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
+import software.amazon.awscdk.services.kms.Key;
 import software.amazon.awscdk.services.lambda.Architecture;
 import software.amazon.awscdk.services.lambda.Code;
 import software.amazon.awscdk.services.lambda.Function;
@@ -44,23 +46,47 @@ public class S3LambdaTranscribeJavaCdkStack extends Stack {
                 .defaultValue("es-US,en-US")
                 .build();
 
+        Key loggingBucketKey = Key.Builder.create(this, "LoggingBucketKey")
+                .alias("LoggingBucketKey")
+                .enableKeyRotation(true)
+                .pendingWindow(Duration.days(7))
+                .removalPolicy(RemovalPolicy.DESTROY)
+                .build();
+
 
         Bucket loggingBucket = Bucket.Builder.create(this, "LoggingBucket")
                 .enforceSsl(true)
                 .encryption(BucketEncryption.KMS)
+                .encryptionKey(loggingBucketKey)
                 .blockPublicAccess(BlockPublicAccess.BLOCK_ALL)
                 .versioned(true)
                 .removalPolicy(RemovalPolicy.DESTROY)
+                .autoDeleteObjects(true)
                 .build();
 
+        Key sourceBucketKey = Key.Builder.create(this, "SourceBucketKey")
+                .alias("SourceBucketKey")
+                .enableKeyRotation(true)
+                .pendingWindow(Duration.days(7))
+                .removalPolicy(RemovalPolicy.DESTROY)
+                .build();
 
         Bucket sourceBucket = Bucket.Builder.create(this, "SourceBucket")
                 .enforceSsl(true)
                 .versioned(true)
                 .encryption(BucketEncryption.KMS)
+                .encryptionKey(sourceBucketKey)
                 .blockPublicAccess(BlockPublicAccess.BLOCK_ALL)
                 .serverAccessLogsBucket(loggingBucket)
                 .serverAccessLogsPrefix("sourceBucket/")
+                .removalPolicy(RemovalPolicy.DESTROY)
+                .autoDeleteObjects(true)
+                .build();
+
+        Key destinationBucketKey = Key.Builder.create(this, "DestinationBucketKey")
+                .alias("DestinationBucketKey")
+                .enableKeyRotation(true)
+                .pendingWindow(Duration.days(7))
                 .removalPolicy(RemovalPolicy.DESTROY)
                 .build();
 
@@ -68,11 +94,14 @@ public class S3LambdaTranscribeJavaCdkStack extends Stack {
                 .enforceSsl(true)
                 .versioned(true)
                 .encryption(BucketEncryption.KMS)
+                .encryptionKey(destinationBucketKey)
                 .blockPublicAccess(BlockPublicAccess.BLOCK_ALL)
                 .serverAccessLogsBucket(loggingBucket)
                 .serverAccessLogsPrefix("destinationBucket/")
                 .removalPolicy(RemovalPolicy.DESTROY)
+                .autoDeleteObjects(true)
                 .build();
+
 
         // Create an IAM role for the Lambda function
         Role lambdaRole = Role.Builder.create(this, "LambdaRole")
@@ -80,9 +109,26 @@ public class S3LambdaTranscribeJavaCdkStack extends Stack {
                 .build();
 
         // Attach the necessary policies to the Lambda role
-        lambdaRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("AmazonTranscribeFullAccess"));
-        lambdaRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("CloudWatchLogsFullAccess"));
+//        lambdaRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("AmazonTranscribeFullAccess"));
+//        lambdaRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("CloudWatchLogsFullAccess"));
 
+
+        // Create a policy statement for CloudWatch Logs
+        PolicyStatement logsStatement = PolicyStatement.Builder.create()
+                .effect(Effect.ALLOW)
+                .actions(List.of("logs:CreateLogGroup","logs:CreateLogStream", "logs:PutLogEvents"))
+                .resources(List.of("*"))
+                .build();
+
+        // Create a policy statement for Amazon Transcribe Logs
+        PolicyStatement transcribeStatement = PolicyStatement.Builder.create()
+                .effect(Effect.ALLOW)
+                .actions(List.of("transcribe:StartTranscriptionJob"))
+                .resources(List.of("*"))
+                .build();
+
+        lambdaRole.addToPolicy(logsStatement);
+        lambdaRole.addToPolicy(transcribeStatement);
 
         Function audioTranscribeFunction = Function.Builder.create(this, "AudioTranscribe")
                 .runtime(Runtime.JAVA_11)
@@ -94,31 +140,27 @@ public class S3LambdaTranscribeJavaCdkStack extends Stack {
                 .environment(Map.of("LANGUAGE_CODE", languageCode.getValueAsString(),
                         "OUTPUT_BUCKET", destinationBucket.getBucketName()))
                 .role(lambdaRole)
-
                 .build();
 
 
         // Add Object Created Notification to Source Bucket
-        sourceBucket.addObjectCreatedNotification(new LambdaDestination(audioTranscribeFunction));
+        LambdaDestination lambdaDestination = new LambdaDestination(audioTranscribeFunction);
+        sourceBucket.addObjectCreatedNotification(lambdaDestination);
 
-        sourceBucket.grantReadWrite(audioTranscribeFunction);
-        destinationBucket.grantReadWrite(audioTranscribeFunction);
+        sourceBucket.grantRead(audioTranscribeFunction);
+        destinationBucket.grantWrite(audioTranscribeFunction);
 
         //CDK NAG Suppression's
-        NagSuppressions.addStackSuppressions(this, List.of(NagPackSuppression.builder()
-                .id("AwsSolutions-KMS5")
-                .reason("S3 Bucket for this example doesn't require KMS rotation needed. In the production, make sure this is enabled for the KMS used in the S3 Buckets")
-                .build()));
-
-        NagSuppressions.addStackSuppressions(this, List.of(NagPackSuppression.builder()
+        NagSuppressions.addResourceSuppressionsByPath(this, "/S3LambdaTranscribeJavaCdkStack/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Role/Resource", List.of(NagPackSuppression.builder()
                 .id("AwsSolutions-IAM4")
-                .reason("AWS managed policies acceptable for this Sample use case")
+                .reason("BucketNotificationsHandler is auto generated by CDK and its using AWS managed policies")
                 .build()));
 
         NagSuppressions.addStackSuppressions(this, List.of(NagPackSuppression.builder()
                 .id("AwsSolutions-IAM5")
                 .reason("The IAM entity in this example contain wildcard permissions. In a real world production workload it is recommended adhering to AWS security best practices regarding least-privilege permissions (https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege)")
                 .build()));
+
         NagSuppressions.addStackSuppressions(this, List.of(NagPackSuppression.builder()
                 .id("AwsSolutions-L1")
                 .reason("Java 11 is LTS version")

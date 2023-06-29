@@ -11,11 +11,22 @@
         <module>Infra</module>
         <module>AudioTranscribeFunction</module>
     </modules>
+    <!-- To Create 3rd Party License List -->
     <dependencies>
         <dependency>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>license-maven-plugin</artifactId>
             <version>2.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>32.0.1-jre</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.13</version>
         </dependency>
     </dependencies>
     <build>
