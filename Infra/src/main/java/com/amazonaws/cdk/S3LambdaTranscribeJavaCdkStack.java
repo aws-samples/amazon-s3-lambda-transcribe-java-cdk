@@ -110,7 +110,7 @@ public class S3LambdaTranscribeJavaCdkStack extends Stack {
                 .assumedBy(new ServicePrincipal("lambda.amazonaws.com"))
                 .build();
 
-        // Create a policy statement for CloudWatch Logs
+        // Create a policy statement for CloudWatch Log Group
         PolicyStatement logGroupStatement = PolicyStatement.Builder.create()
                 .effect(Effect.ALLOW)
                 .actions(List.of("logs:CreateLogGroup"))
@@ -148,6 +148,7 @@ public class S3LambdaTranscribeJavaCdkStack extends Stack {
         sourceBucket.grantRead(audioTranscribeFunction);
         destinationBucket.grantWrite(audioTranscribeFunction);
 
+        // Create a policy statement for CloudWatch Logs
         PolicyStatement logsStatement = PolicyStatement.Builder.create()
                 .effect(Effect.ALLOW)
                 .actions(List.of("logs:CreateLogStream", "logs:PutLogEvents"))
