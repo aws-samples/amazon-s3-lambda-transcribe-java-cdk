@@ -1,3 +1,8 @@
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: MIT-0
+ */
+
 package com.amazonaws.lambda;
 
 import com.amazonaws.services.lambda.runtime.Context;
