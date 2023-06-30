@@ -8,10 +8,7 @@ package com.amazonaws.cdk;
 import io.github.cdklabs.cdknag.NagPackSuppression;
 import io.github.cdklabs.cdknag.NagSuppressions;
 import software.amazon.awscdk.*;
-import software.amazon.awscdk.services.iam.Effect;
-import software.amazon.awscdk.services.iam.PolicyStatement;
-import software.amazon.awscdk.services.iam.Role;
-import software.amazon.awscdk.services.iam.ServicePrincipal;
+import software.amazon.awscdk.services.iam.*;
 import software.amazon.awscdk.services.kms.Key;
 import software.amazon.awscdk.services.lambda.Architecture;
 import software.amazon.awscdk.services.lambda.Code;
@@ -113,17 +110,13 @@ public class S3LambdaTranscribeJavaCdkStack extends Stack {
                 .assumedBy(new ServicePrincipal("lambda.amazonaws.com"))
                 .build();
 
-        // Attach the necessary policies to the Lambda role
-//        lambdaRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("AmazonTranscribeFullAccess"));
-//        lambdaRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("CloudWatchLogsFullAccess"));
-
-
         // Create a policy statement for CloudWatch Logs
-        PolicyStatement logsStatement = PolicyStatement.Builder.create()
+        PolicyStatement logGroupStatement = PolicyStatement.Builder.create()
                 .effect(Effect.ALLOW)
-                .actions(List.of("logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"))
-                .resources(List.of("*"))
+                .actions(List.of("logs:CreateLogGroup"))
+                .resources(List.of("arn:aws:logs:" + getRegion() + ":" + getAccount() + ":*"))
                 .build();
+
 
         // Create a policy statement for Amazon Transcribe Logs
         PolicyStatement transcribeStatement = PolicyStatement.Builder.create()
@@ -132,8 +125,8 @@ public class S3LambdaTranscribeJavaCdkStack extends Stack {
                 .resources(List.of("*"))
                 .build();
 
-        lambdaRole.addToPolicy(logsStatement);
         lambdaRole.addToPolicy(transcribeStatement);
+        lambdaRole.addToPolicy(logGroupStatement);
 
         Function audioTranscribeFunction = Function.Builder.create(this, "AudioTranscribe")
                 .runtime(Runtime.JAVA_11)
@@ -148,13 +141,24 @@ public class S3LambdaTranscribeJavaCdkStack extends Stack {
                 .role(lambdaRole)
                 .build();
 
-
         // Add Object Created Notification to Source Bucket
         LambdaDestination lambdaDestination = new LambdaDestination(audioTranscribeFunction);
         sourceBucket.addObjectCreatedNotification(lambdaDestination);
 
         sourceBucket.grantRead(audioTranscribeFunction);
         destinationBucket.grantWrite(audioTranscribeFunction);
+
+        PolicyStatement logsStatement = PolicyStatement.Builder.create()
+                .effect(Effect.ALLOW)
+                .actions(List.of("logs:CreateLogStream", "logs:PutLogEvents"))
+                .resources(List.of("arn:aws:logs:" + getRegion() + ":" + getAccount() + ":log-group:/aws/lambda/" + audioTranscribeFunction.getFunctionName() + ":*"))
+                .build();
+
+        audioTranscribeFunction.getRole().attachInlinePolicy(Policy.Builder.create(this, "LogsPolicy")
+                .document(PolicyDocument.Builder.create()
+                        .statements(List.of(logsStatement))
+                        .build())
+                .build());
 
         //CDK NAG Suppression's
         NagSuppressions.addResourceSuppressionsByPath(this, "/S3LambdaTranscribeJavaCdkStack/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Role/Resource",
