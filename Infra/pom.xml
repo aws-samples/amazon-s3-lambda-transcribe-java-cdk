@@ -40,7 +40,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.0.0</version>
                 <configuration>
-                    <mainClass>com.myorg.S3LambdaTranscribeJavaCdkApp</mainClass>
+                    <mainClass>com.amazonaws.cdk.S3LambdaTranscribeJavaCdkApp</mainClass>
                 </configuration>
             </plugin>
         </plugins>

@@ -1,4 +1,4 @@
-package com.myorg;
+package com.amazonaws.cdk;
 
 import io.github.cdklabs.cdknag.AwsSolutionsChecks;
 import io.github.cdklabs.cdknag.NagPackProps;

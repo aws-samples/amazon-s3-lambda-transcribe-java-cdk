@@ -1,4 +1,4 @@
-package com.myorg;
+package com.amazonaws.cdk;
 
 import io.github.cdklabs.cdknag.NagPackSuppression;
 import io.github.cdklabs.cdknag.NagSuppressions;
@@ -133,7 +133,7 @@ public class S3LambdaTranscribeJavaCdkStack extends Stack {
         Function audioTranscribeFunction = Function.Builder.create(this, "AudioTranscribe")
                 .runtime(Runtime.JAVA_11)
                 .architecture(Architecture.X86_64)
-                .handler("com.arunzlair.AudioTranscribe")
+                .handler("com.amazonaws.lambda.AudioTranscribe")
                 .memorySize(1024)
                 .timeout(Duration.minutes(3))
                 .code(Code.fromAsset("../assets/AudioTranscribeFunction.jar"))
