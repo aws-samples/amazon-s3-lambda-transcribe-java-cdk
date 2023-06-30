@@ -133,7 +133,7 @@ public class S3LambdaTranscribeJavaCdkStack extends Stack {
                 .architecture(Architecture.X86_64)
                 .handler("com.amazonaws.lambda.AudioTranscribe")
                 .memorySize(1024)
-                .timeout(Duration.minutes(3))
+                .timeout(Duration.minutes(5))
                 .code(Code.fromAsset("../assets/AudioTranscribeFunction.jar"))
                 .environment(Map.of("LANGUAGE_CODE", languageCode.getValueAsString(),
                         "OUTPUT_BUCKET", destinationBucket.getBucketName(),
