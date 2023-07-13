@@ -14,7 +14,7 @@
         <version>1.0</version>
     </parent>
 
-    <groupId>com.arunzlair</groupId>
+    <groupId>com.amazonaws.cdk</groupId>
     <artifactId>Infra</artifactId>
 
     <properties>

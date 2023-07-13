@@ -22,8 +22,6 @@ import software.constructs.Construct;
 
 import java.util.List;
 import java.util.Map;
-// import software.amazon.awscdk.Duration;
-// import software.amazon.awscdk.services.sqs.Queue;
 
 public class S3LambdaTranscribeJavaCdkStack extends Stack {
     public S3LambdaTranscribeJavaCdkStack(final Construct scope, final String id) {
@@ -32,15 +30,6 @@ public class S3LambdaTranscribeJavaCdkStack extends Stack {
 
     public S3LambdaTranscribeJavaCdkStack(final Construct scope, final String id, final StackProps props) {
         super(scope, id, props);
-
-//		CfnParameter sourceBucketName = CfnParameter.Builder.create(this, "SourceBucketName")
-//		                                                    .type("String")
-//		                                                    .description("Name of the source bucket")
-//		                                                    .build();
-//		CfnParameter destinationBucketName = CfnParameter.Builder.create(this, "DestinationBucketName")
-//		                                                         .type("String")
-//		                                                         .description("Name of the destination bucket")
-//		                                                         .build();
 
         CfnParameter languageCode = CfnParameter.Builder.create(this, "transcribeLanguageCode")
                 .type("String")
@@ -176,7 +165,7 @@ public class S3LambdaTranscribeJavaCdkStack extends Stack {
 
         NagSuppressions.addStackSuppressions(this, List.of(NagPackSuppression.builder()
                 .id("AwsSolutions-IAM5")
-                .reason("The IAM entity in this example contain wildcard permissions. In a real world production workload it is recommended adhering to AWS security best practices regarding least-privilege permissions (https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege)")
+                .reason("Lambda needs access to create Log group and put log events which require *. StartTranscriptionJob doesn't support resource-level permissions.")
                 .build()));
 
         NagSuppressions.addStackSuppressions(this, List.of(NagPackSuppression.builder()
