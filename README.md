@@ -53,8 +53,8 @@ cdk bootstrap aws://<account>/<region>
 
 Clone the repository and navigate to the project directory.
 ```
-git clone https://github.com/arunt4ever/s3-lambda-transcribe-java-cdk.git
-cd s3-lambda-transcribe-java-cdk
+git clone https://github.com/aws-samples/amazon-s3-lambda-transcribe-java-cdk.git
+cd amazon-s3-lambda-transcribe-java-cdk
 ```
 
 ## Build
