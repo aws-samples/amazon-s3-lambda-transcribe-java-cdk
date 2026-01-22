@@ -118,7 +118,7 @@ public class S3LambdaTranscribeJavaCdkStack extends Stack {
         lambdaRole.addToPolicy(logGroupStatement);
 
         Function audioTranscribeFunction = Function.Builder.create(this, "AudioTranscribe")
-                .runtime(Runtime.JAVA_11)
+                .runtime(Runtime.JAVA_21)
                 .architecture(Architecture.X86_64)
                 .handler("com.amazonaws.lambda.AudioTranscribe")
                 .memorySize(1024)
@@ -170,7 +170,7 @@ public class S3LambdaTranscribeJavaCdkStack extends Stack {
 
         NagSuppressions.addStackSuppressions(this, List.of(NagPackSuppression.builder()
                 .id("AwsSolutions-L1")
-                .reason("Java 11 is LTS version")
+                .reason("Java 21 is LTS version")
                 .build()));
 
     }

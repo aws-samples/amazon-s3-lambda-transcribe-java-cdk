@@ -14,3 +14,6 @@ cdk.out
 /assets/original-AudioTranscribeFunction.jar
 
 /assets/AudioTranscribeFunction.jar
+
+# Kiro IDE configuration
+.kiro

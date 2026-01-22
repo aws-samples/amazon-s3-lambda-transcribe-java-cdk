@@ -19,7 +19,7 @@ Destination Bucket - S3 bucket where the text file is stored.
 ## Pre-requisites
 
 * AWS Account
-* Java 17 or later
+* Java 21 or later
 ```
 java -version
 ```
